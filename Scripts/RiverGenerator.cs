@@ -5,7 +5,8 @@ using UnityEngine;
 
 public class RiverGenerator : MonoBehaviour
 {
-
+    private static int[,] adjacentDirections = new int[,]{{-1,-1},{-1,0},{-1,1},{0,1},{1,1},{1,0},{1,-1},{0,-1}};
+    private static bool edgeReached;
     public static Vector2[] GenerateSources(float[,] heightMap, int sourcesNum)
     {
         int width = heightMap.GetLength(0);
@@ -42,49 +43,23 @@ public class RiverGenerator : MonoBehaviour
 
         for (int s = 0; s < sourcesNum; s++) // Creates a river for each source generated
         {
-            bool edgeReached = false;
-            int count = 0;
-
+            edgeReached = false;
             float currentRiverHeight = heightMap[(int)sources[s].x, (int)sources[s].y];
             riverMap[(int)sources[s].x, (int)sources[s].y] = 1.0f;
-            float currentLowest = currentRiverHeight;
-            Vector2 currentLowestPosition = new();
+            Vector2 nextRiverPosition = new();
             Vector2 currentRiverPosition = new();
             currentRiverPosition.Set((int)sources[s].x, (int)sources[s].y);
             while (currentRiverHeight > 0.2f && edgeReached == false)
             {
-                if (count > 10000)
-                {
-                    edgeReached = true;
-                }
-                try
-                {
-
-                    float lastLowest = currentLowest;
-                    currentLowestPosition = FindSurroundingLowest(currentLowest, currentRiverPosition, heightMap, currentLowestPosition, riverMap);
-                    currentLowest = heightMap[(int)currentLowestPosition.x, (int)currentLowestPosition.y];
-
-                    if (currentLowest == lastLowest)
-                    {
-
-                        currentLowest += 0.1f;
-                        currentLowestPosition = FindSurroundingLowest(currentLowest, currentRiverPosition, heightMap, currentLowestPosition, riverMap);
-                        currentLowest = heightMap[(int)currentLowestPosition.x, (int)currentLowestPosition.y];
-                    }
-
-                }
-                catch (IndexOutOfRangeException e)
-                {
-                    edgeReached = true;
-                }
-
-                riverMap[(int)currentLowestPosition.x, (int)currentLowestPosition.y] = 1.0f;
-                currentRiverHeight = currentLowest;
-                currentRiverPosition = currentLowestPosition;
-
-                count++;
+                nextRiverPosition = FindNextPosition(currentRiverPosition, heightMap, riverMap);
+                riverMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y] = 1.0f;
+                currentRiverHeight = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
+                currentRiverPosition = nextRiverPosition;
             }
+            Debug.Log("Source: " + s + " River finished at height: " + currentRiverHeight);
+            Debug.Log("River finished at position X: " + currentRiverPosition.x + " Y: " + currentRiverPosition.y);
         }
+
         return riverMap;
     }
     public static float[,] GenerateRiverHeightMap(float[,] heightMap, float[,] riverMap)
@@ -114,117 +89,77 @@ public class RiverGenerator : MonoBehaviour
         sourcePosition.Set(randomX, randomY);
         return sourcePosition;
     }
-    private static Vector2 FindSurroundingLowest(float currentLowest, Vector2 currentRiverPosition, float[,] heightMap, Vector2 currentLowestPosition, float[,] riverMap)
+    private static Vector2 FindNextPosition(Vector2 currentRiverPosition, float[,] heightMap, float[,] riverMap)
     {
-        Vector2 currentLowestPos = currentLowestPosition;
-        bool surroundedByWater = false;
-        Vector2 surroundingCurrentLowest = findSurroundingCurrentLowest(heightMap, currentRiverPosition);
-        if (heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y] > heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            currentLowestPos.Set(surroundingCurrentLowest.x, surroundingCurrentLowest.y);
-        } else
-        {
-            currentLowestPos.Set(surroundingCurrentLowest.x, surroundingCurrentLowest.y);
+        edgeReached = false;
+        Vector2 nextPos = new();
 
-        }
+        bool lowerFound = false;
+        List<Vector2> visited = new List<Vector2>();
+        List<Vector2> toSearchFrom = new List<Vector2>();
+        // Adds the current position as the first point to search from
+        visited.Add(currentRiverPosition);
+        toSearchFrom.Add(currentRiverPosition);
+        int count = 0;
+        //Searches until a lower point is found
+        while (lowerFound == false && count < 100)
+        {
+            // Creates array of new points to search from
+            List<Vector2> newToSearchFrom = new List<Vector2>();
+            // For every vector to search from, all 8 adjacent points will be searched
+            for (int i = 0; i < toSearchFrom.Count; i++)
+            {
+                Vector2 currentPos = toSearchFrom[i];
+                // Searches all 8 adjacent points
 
-
-        //if (heightMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y - 1] < currentLowest 
-        //    && riverMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y - 1] != 1.0f)
-        //{
-        //    currentLowestPos.Set(currentRiverPosition.x - 1, currentRiverPosition.y - 1);
-        //}
-        //if (heightMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y] < currentLowest 
-        //    && riverMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y] != 1.0f)
-        //{
-        //    currentLowestPos.Set(currentRiverPosition.x - 1, currentRiverPosition.y);
-        //}
-        //if (heightMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y + 1] < currentLowest 
-        //    && riverMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y + 1] != 1.0f)
-        //{
-        //    currentLowestPos.Set(currentRiverPosition.x - 1, currentRiverPosition.y + 1);
-        //}
-        //if (heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y + 1] < currentLowest 
-        //    && riverMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y + 1] != 1.0f)
-        //{
-        //    currentLowestPos.Set(currentRiverPosition.x, currentRiverPosition.y + 1);
-        //}
-        //if (heightMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y + 1] < currentLowest 
-        //    && riverMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y + 1] != 1.0f) 
-        //{
-        //    currentLowestPos.Set(currentRiverPosition.x + 1, currentRiverPosition.y + 1);
-        //}
-        //if (heightMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y] < currentLowest 
-        //    && riverMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y] != 1.0f)
-        //{
-        //    currentLowestPos.Set(currentRiverPosition.x + 1, currentRiverPosition.y);
-        //}
-        //if (heightMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y - 1] < currentLowest 
-        //    && riverMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y - 1] != 1.0f)
-        //{
-        //    currentLowestPos.Set(currentRiverPosition.x + 1, currentRiverPosition.y - 1);
-        //}
-        //if (heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y - 1] < currentLowest 
-        //    && riverMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y - 1] != 1.0f)
-        //{
-        //    currentLowestPos.Set(currentRiverPosition.x, currentRiverPosition.y - 1);
-        //}
-        //if (riverMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y - 1] == 1.0f
-        //    && riverMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y] == 1.0f
-        //    && riverMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y + 1] == 1.0f
-        //    && riverMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y + 1] == 1.0f
-        //    && riverMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y + 1] == 1.0f
-        //    && riverMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y] == 1.0f
-        //    && riverMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y - 1] == 1.0f
-        //    && riverMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y - 1] == 1.0f)
-        //{
-        //    surroundedByWater = true;
-        //}
-
-        //if (surroundedByWater == true)
-        //{
-        //    currentLowestPos.Set((int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y);
-        //}
-        return currentLowestPos;
-    }
-
-    private static Vector2 findSurroundingCurrentLowest(float[,] heightMap, Vector2 currentRiverPosition)
-    {
-        Vector2 surroundingCurrentLowest = new();
-        surroundingCurrentLowest.Set(currentRiverPosition.x - 1, currentRiverPosition.y - 1); // Abitrary point surrounding current river position
-
-        if (heightMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y - 1] < heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            surroundingCurrentLowest.Set(currentRiverPosition.x - 1, currentRiverPosition.y - 1);
+                for (int j = 0; j < adjacentDirections.GetLength(0); j++)
+                {
+                    bool visitedCheck = false;
+                    // Searches adjacent point
+                    int cx = (int)currentPos.x + adjacentDirections[j, 0];
+                    int cy = (int)currentPos.y + adjacentDirections[j, 1];
+                    // Checks to see if the point has already been visited
+                    for (int vi = 0; vi < visited.Count; vi++)
+                    {
+                        if (visited[vi].x == cx && visited[vi].y == cy)
+                        {
+                            // If it is in the visited array, then visited check will be true
+                            visitedCheck = true;
+                        }
+                    }
+                    try
+                    {
+                        // If visited check is false then it will check to see if the adjacent point is lower than the original point
+                        if (visitedCheck == false)
+                        {
+                            // If it is lower, then it will set the next position as that point and lower found will be true
+                            if (heightMap[cx, cy] < heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y] && riverMap[cx, cy] != 1.0f)
+                            {
+                                nextPos.Set(cx, cy);
+                                lowerFound = true;
+                            }
+                            Vector2 visitedPos = new();
+                            visitedPos.Set(cx, cy);
+                            // Adds adjacent point to the list of visited points
+                            visited.Add(visitedPos);
+                            // Adds adajcent point to the list of points to search from next time
+                            // as all adjacent points of the adjacent points must be searched until 
+                            // a lower point is found
+                            newToSearchFrom.Add(visitedPos);
+                        }
+                    }
+                    catch (IndexOutOfRangeException e)
+                    {
+                        edgeReached = true;
+                        goto Reached; 
+                    }
+                }
+            }
+            // the search from array is given all the new values to search from
+            toSearchFrom = newToSearchFrom;
+            count++;
         }
-        if (heightMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y] < heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            surroundingCurrentLowest.Set(currentRiverPosition.x - 1, currentRiverPosition.y);
-        }
-        if (heightMap[(int)currentRiverPosition.x - 1, (int)currentRiverPosition.y + 1] < heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            surroundingCurrentLowest.Set(currentRiverPosition.x - 1, currentRiverPosition.y + 1);
-        }
-        if (heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y + 1] < heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            surroundingCurrentLowest.Set(currentRiverPosition.x, currentRiverPosition.y - 1);
-        }
-        if (heightMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y + 1] < heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            surroundingCurrentLowest.Set(currentRiverPosition.x + 1, currentRiverPosition.y + 1);
-        }
-        if (heightMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y] < heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            surroundingCurrentLowest.Set(currentRiverPosition.x + 1, currentRiverPosition.y);
-        }
-        if (heightMap[(int)currentRiverPosition.x + 1, (int)currentRiverPosition.y - 1] < heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            surroundingCurrentLowest.Set(currentRiverPosition.x + 1, currentRiverPosition.y - 1);
-        }
-        if (heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y - 1] < heightMap[(int)surroundingCurrentLowest.x, (int)surroundingCurrentLowest.y])
-        {
-            surroundingCurrentLowest.Set(currentRiverPosition.x, currentRiverPosition.y - 1);
-        }
-        return surroundingCurrentLowest;
+        Reached:
+        return nextPos;
     }
 }

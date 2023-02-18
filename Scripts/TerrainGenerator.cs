@@ -29,6 +29,7 @@ public class TerrainGenerator : MonoBehaviour
         meshData = MeshGenerator.GenerateMesh(noiseMap);
         TerrainDrawer drawer = FindObjectOfType<TerrainDrawer>();
         drawer.DrawTerrain(noiseMap, meshData);
+        Debug.Log("Terrain Generated");
 
     }
     public void GenerateSources()
