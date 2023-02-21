@@ -7,26 +7,30 @@ public class RiverGenerator : MonoBehaviour
 {
     private static int[,] adjacentDirections = new int[,]{{-1,-1},{-1,0},{-1,1},{0,1},{1,1},{1,0},{1,-1},{0,-1}};
     private static bool edgeReached;
-    public static Vector2[] GenerateSources(float[,] heightMap, int sourcesNum)
+    public static Vector2[] GenerateSources(float[,] heightMap, int sourcesNum, int seed)
     {
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
         float[,] riverMap = new float[width, height];
         Vector2[] sources = new Vector2[sourcesNum];
-
-        for (int s = 0; s < sourcesNum; s++) // Generates number of sources specified by the user
+        List<Vector2> potentialSources = new List<Vector2>();
+        for (int x = 0; x < width; x++)
         {
-            bool check = false;
-            while (check == false) // Makes sure that the source generated is higher than a certain height value
+            for (int y = 0; y < height; y++)
             {
-                Vector2 sourcePosition = GenerateSource(); // Generates the source
-                if (heightMap[(int)sourcePosition.x, (int)sourcePosition.y] > 0.8)
+                if (heightMap[x,y] > 0.8f)
                 {
-                    riverMap[(int)sourcePosition.x, (int)sourcePosition.y] = 1.0f;
-                    sources[s].Set((int)sourcePosition.x, (int)sourcePosition.y);
-                    check = true;
+                    potentialSources.Add(new Vector2(x,y));
                 }
             }
+        }
+        for (int s = 0; s < sourcesNum; s++) // Generates number of sources specified by the user
+        {
+            seed = seed + s;
+            Vector2 sourcePosition = GenerateSource(potentialSources, seed); // Generates the source
+            riverMap[(int)sourcePosition.x, (int)sourcePosition.y] = 1.0f;
+            sources[s].Set((int)sourcePosition.x, (int)sourcePosition.y);
+
         }
         //float[,] modifiedHeightMap = GenerateRiverHeightMap(heightMap, riverMap);
         //MeshData meshData = MeshGenerator.GenerateMesh(modifiedHeightMap);
@@ -80,13 +84,12 @@ public class RiverGenerator : MonoBehaviour
         return modifiedHeightMap;
     }
 
-    private static Vector2 GenerateSource()
+    private static Vector2 GenerateSource(List<Vector2> potentialSources, int seed)
     {
         Vector2 sourcePosition = new();
-        System.Random rnd = new();
-        int randomX = rnd.Next(1, 5000);
-        int randomY = rnd.Next(1, 5000);
-        sourcePosition.Set(randomX, randomY);
+        System.Random rnd = new(seed);
+        int randomVector = rnd.Next(0, potentialSources.Count);
+        sourcePosition.Set(potentialSources[randomVector].x, potentialSources[randomVector].y);
         return sourcePosition;
     }
     private static Vector2 FindNextPosition(Vector2 currentRiverPosition, float[,] heightMap, float[,] riverMap)
