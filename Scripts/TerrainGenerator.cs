@@ -17,23 +17,26 @@ public class TerrainGenerator : MonoBehaviour
     private float persistence = 0.5f;
     private float lacunarity = 2;
 
-    public int seed;
+    public int terrainSeed;
     [Range(1, 10)]
     public int sources;
+    public int sourcesSeed;
     public Vector2 offset;
-    public bool autoUpdate;
+
 
     public void GenerateTerrain()
     {
-        noiseMap = Noise.GenerateNoiseMap(mapWidth, mapHeight, seed, noiseScale, octaves, persistence, lacunarity, offset);
+        noiseMap = Noise.GenerateNoiseMap(mapWidth, mapHeight, terrainSeed, noiseScale, octaves, persistence, lacunarity, offset);
         meshData = MeshGenerator.GenerateMesh(noiseMap);
         TerrainDrawer drawer = FindObjectOfType<TerrainDrawer>();
         drawer.DrawTerrain(noiseMap, meshData);
+        Debug.Log("Terrain Generated");
 
     }
     public void GenerateSources()
     {
-        sourceArray = RiverGenerator.GenerateSources(noiseMap, sources);
+        sourceArray = RiverGenerator.GenerateSources(noiseMap, sources, sourcesSeed);
+        Debug.Log("Sources Generated");
     }
     public void GenerateRivers()
     {
@@ -42,5 +45,6 @@ public class TerrainGenerator : MonoBehaviour
         meshData = MeshGenerator.GenerateMesh(heightMap);
         TerrainDrawer drawer = FindObjectOfType<TerrainDrawer>();
         drawer.DrawTerrainWithRivers(heightMap, meshData, riverMap);
+        Debug.Log("Rivers Generated");
     }
 }

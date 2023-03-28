@@ -33,7 +33,7 @@ public class TerrainDrawer : MonoBehaviour
         {
             for (int x = 0; x < width; x++)
             {
-                if (riverMap[x, y] == 1.0f) // river
+                if (riverMap[x, y] > 0.0f) // river
                 {
                     Color newColor = new Color(24f / 255f, 22f / 255f, 172f / 255f, 0.8f);
                     colourMap[y * width + x] = newColor;
