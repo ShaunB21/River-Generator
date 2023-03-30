@@ -3,48 +3,27 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
-public class RiverGenerator : MonoBehaviour
+public class RiverGenerator
 {
     private static int[,] adjacentDirections = new int[,]{{-1,-1},{-1,0},{-1,1},{0,1},{1,1},{1,0},{1,-1},{0,-1}};
     private static bool edgeReached;
-    public static Vector2[] GenerateSources(float[,] heightMap, int sourcesNum, int seed)
-    {
-        int width = heightMap.GetLength(0);
-        int height = heightMap.GetLength(1);
-        float[,] riverMap = new float[width, height];
-        Vector2[] sources = new Vector2[sourcesNum];
-        List<Vector2> potentialSources = new List<Vector2>();
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (heightMap[x,y] > 0.8f)
-                {
-                    potentialSources.Add(new Vector2(x,y));
-                }
-            }
-        }
-        for (int s = 0; s < sourcesNum; s++) // Generates number of sources specified by the user
-        {
-            seed = seed + s;
-            Vector2 sourcePosition = GenerateSource(potentialSources, seed); // Generates the source
-            riverMap[(int)sourcePosition.x, (int)sourcePosition.y] = heightMap[(int)sourcePosition.x, (int)sourcePosition.y];
-            sources[s].Set((int)sourcePosition.x, (int)sourcePosition.y);
 
-        }
-        //float[,] modifiedHeightMap = GenerateRiverHeightMap(heightMap, riverMap);
-        //MeshData meshData = MeshGenerator.GenerateMesh(modifiedHeightMap);
-        //TerrainDrawer drawer = FindObjectOfType<TerrainDrawer>();
-        //drawer.DrawTerrainWithRivers(modifiedHeightMap, meshData, riverMap);
-        return sources;
+    private static float[,] heightMap;
+    private static Vector2[] sources;
+    private static int width;
+    private static int height;
+    private static float[,] riverMap;
+    public RiverGenerator(float[,] heightMap, Vector2[] sources)
+    {
+        RiverGenerator.heightMap = heightMap;
+        RiverGenerator.sources = sources;
+        width = heightMap.GetLength(0);
+        height = heightMap.GetLength(1);
+        riverMap = new float[width, height];
     }
-    public static float[,] GenerateRiverMap(float[,] heightMap, Vector2[] sources)
+    public float[,] GenerateRiverMap()
     {
         int sourcesNum = sources.Length;
-        int width = heightMap.GetLength(0);
-        int height = heightMap.GetLength(1);
-        float[,] riverMap = new float[width, height];
-
         for (int s = 0; s < sourcesNum; s++) // Creates a river for each source generated
         {
             edgeReached = false;
@@ -53,62 +32,20 @@ public class RiverGenerator : MonoBehaviour
             currentRiverPosition.Set((int)sources[s].x, (int)sources[s].y);
             while (currentRiverHeight > 0.2f && edgeReached == false)
             {
-                Boolean lowerFound = false;
-                Vector2 nextRiverPosition = FindNextPosition(currentRiverPosition, heightMap, riverMap);
+                Vector2 nextRiverPosition = FindNextPosition(currentRiverPosition, s);
                 Vector2 currentPos = currentRiverPosition;
-
-                if (nextRiverPosition == currentRiverPosition)
+                bool reached = false;
+                // Position to reach has bigger x and y values
+                try
                 {
-                    Vector2 nextPos = nextRiverPosition;
-                    int count = 0;
-                    while (lowerFound == false)
-                    {
-                        int xIncrement;
-                        int yIncrement;
-                        if (sources[s].x - currentRiverPosition.x > 0)
-                        {
-                            xIncrement = -1;
-                        } else
-                        {
-                            xIncrement = 1;
-                        }
-
-                        if (sources[s].y - currentRiverPosition.y > 0)
-                        {
-                            yIncrement = -1;
-                        } else
-                        {
-                            yIncrement = 1;
-                        }
-                        nextPos.x = nextPos.x + xIncrement;
-                        nextPos.y = nextPos.y + yIncrement;
-                        try
-                        {
-                            if (heightMap[(int)nextPos.x, (int)nextPos.y] < heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y])
-                            {
-                                nextRiverPosition = nextPos;
-                                lowerFound = true;
-                            }
-                        } catch (Exception e)
-                        {
-                            edgeReached = true;
-                            break;
-                        }
-                        riverMap[(int)nextPos.x, (int)nextPos.y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
-                        count++;
-                    }
-                } else
-                {
-                    Boolean reached = false;
-                    // Position to reach has bigger x and y values
-                    if (nextRiverPosition.x > currentRiverPosition.x && nextRiverPosition.y > currentRiverPosition.y) 
+                    if (nextRiverPosition.x > currentRiverPosition.x && nextRiverPosition.y > currentRiverPosition.y)
                     {
                         while (reached == false)
                         {
                             if (currentPos.x != nextRiverPosition.x)
                             {
                                 currentPos.x++;
-                            } 
+                            }
                             if (currentPos.y != nextRiverPosition.y)
                             {
                                 currentPos.y++;
@@ -116,7 +53,8 @@ public class RiverGenerator : MonoBehaviour
                             if (currentPos == nextRiverPosition)
                             {
                                 reached = true;
-                            } else
+                            }
+                            else
                             {
                                 riverMap[(int)currentPos.x, (int)currentPos.y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
                             }
@@ -194,21 +132,19 @@ public class RiverGenerator : MonoBehaviour
                             }
                         }
                     }
-                }
-
-                riverMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y] = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
-                currentRiverHeight = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
-                currentRiverPosition = nextRiverPosition;
+                    riverMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y] = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
+                    currentRiverHeight = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
+                    currentRiverPosition = nextRiverPosition;
+                } catch (IndexOutOfRangeException e)
+                {
+                    edgeReached = true;
+                }         
             }
-
         }
-
         return riverMap;
     }
-    public static float[,] GenerateRiverHeightMap(float[,] heightMap, float[,] riverMap)
+    public float[,] GenerateRiverHeightMap()
     {
-        int width = heightMap.GetLength(0);
-        int height = heightMap.GetLength(1);
         float[,] modifiedHeightMap = heightMap;
         for (int x = 0; x < width; x++)
         {
@@ -216,68 +152,54 @@ public class RiverGenerator : MonoBehaviour
             {
                 if (riverMap[x, y] > 0.0f)
                 {
-                    float count = 0.0f;
+                    float heightIncrease = 0.0f;
                     int i = 0;
                     Boolean done = false;
-                    if (heightMap[x + 0, y] - riverMap[x, y] > 0.01 || heightMap[x - 0, y] - riverMap[x, y] > 0.01)
+                    if (heightMap[x, y] - riverMap[x, y] > 0.01 || heightMap[x, y] - riverMap[x, y] > 0.01)
                     {
                         while (done == false)
                         {
-                            if (heightMap[x + i, y] - riverMap[x, y] > 0.01)
+                            try
                             {
-                                Debug.Log("Step height: " + heightMap[x + i, y] + "Original height: " + riverMap[x, y]);
-                                Debug.Log(i);
-                                if (riverMap[x, y] + count > modifiedHeightMap[x + i, y])
+                                if (riverMap[x, y] + heightIncrease > modifiedHeightMap[x + i, y])
                                 {
-                                    done = true;
                                     break;
                                 }
                                 else
                                 {
-                                    modifiedHeightMap[x + i, y] = riverMap[x, y] + count;
+                                    modifiedHeightMap[x + i, y] = riverMap[x, y] + heightIncrease;
                                 }
-                            }
-                            count += 0.005f;
+                            } catch (IndexOutOfRangeException e) {break;}
+                            heightIncrease += 0.005f;
                             i++;
                         }
-                        count = 0.0f;
+                        heightIncrease = 0.0f;
                         i = 0;
-                        done = false;
                         while (done == false)
                         {
-                            if (heightMap[x - i, y] - riverMap[x, y] > 0.01)
+                            try
                             {
-                                if (riverMap[x, y] + count > modifiedHeightMap[x - i, y])
+                                if (riverMap[x, y] + heightIncrease > modifiedHeightMap[x - i, y])
                                 {
                                     break;
                                 }
                                 else
                                 {
-                                    modifiedHeightMap[x - i, y] = riverMap[x, y] + count;
+                                    modifiedHeightMap[x - i, y] = riverMap[x, y] + heightIncrease;
                                 }
                             }
-                            count += 0.005f;
+                            catch (IndexOutOfRangeException e) {break;}
+                            heightIncrease += 0.005f;
                             i++;
                         }
                     }
-
                     modifiedHeightMap[x, y] = riverMap[x, y] - 0.005f;
                 }
             }
         }
         return modifiedHeightMap;
     }
-
-
-    private static Vector2 GenerateSource(List<Vector2> potentialSources, int seed)
-    {
-        Vector2 sourcePosition = new();
-        System.Random rnd = new(seed);
-        int randomVector = rnd.Next(0, potentialSources.Count);
-        sourcePosition.Set(potentialSources[randomVector].x, potentialSources[randomVector].y);
-        return sourcePosition;
-    }
-    private static Vector2 FindNextPosition(Vector2 currentRiverPosition, float[,] heightMap, float[,] riverMap)
+    private Vector2 FindNextPosition(Vector2 currentRiverPosition, int source)
     {
         edgeReached = false;
         Vector2 nextPos = new();
@@ -349,6 +271,42 @@ public class RiverGenerator : MonoBehaviour
             count++;
             if (count > 100)
             {
+                while (lowerFound == false)
+                {
+                    int xIncrement;
+                    int yIncrement;
+                    if (sources[source].x - currentRiverPosition.x > 0)
+                    {
+                        xIncrement = -1;
+                    }
+                    else
+                    {
+                        xIncrement = 1;
+                    }
+
+                    if (sources[source].y - currentRiverPosition.y > 0)
+                    {
+                        yIncrement = -1;
+                    }
+                    else
+                    {
+                        yIncrement = 1;
+                    }
+                    nextPos.x = nextPos.x + xIncrement;
+                    nextPos.y = nextPos.y + yIncrement;
+                    try
+                    {
+                        if (heightMap[(int)nextPos.x, (int)nextPos.y] < heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y])
+                        {
+                            lowerFound = true;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        edgeReached = true;
+                        break;
+                    }
+                }
                 goto End;
             }
         }
@@ -361,3 +319,4 @@ public class RiverGenerator : MonoBehaviour
 // Terrain 343 - River 7223
 // Terrain 343 - River 3443 (erosion) (LONG GENERATION)
 // Terrain 343 - River 344343 (erosion)
+// Terrain 6565 - River 844 (four sources)
