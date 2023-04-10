@@ -7,14 +7,14 @@ public class TerrainGenerator : MonoBehaviour
     private float[,] noiseMap;
     private Vector2[] sourceArray;
 
-    private int mapWidth = 5000;
-    private int mapHeight = 5000;
-    private float noiseScale = 800;
+    public int mapWidth = 5000;
+    public int mapHeight = 5000;
+    public float noiseScale = 800;
 
 
-    private int octaves = 4;
-    private float persistence = 0.5f;
-    private float lacunarity = 2;
+    public int octaves = 4;
+    public float persistence = 0.5f;
+    public float lacunarity = 2;
     private Vector2 offset = new Vector2(0, 0);
 
     public int terrainSeed;
@@ -40,7 +40,7 @@ public class TerrainGenerator : MonoBehaviour
     }
     public void GenerateRivers()
     {
-        RiverGenerator rg = new RiverGenerator(noiseMap, sourceArray);
+        RiverGenerator rg = new RiverGenerator(noiseMap, sourceArray, sourcesSeed);
 
         float[,] riverMap = rg.GenerateRiverMap();
         float[,] heightMap = rg.GenerateRiverHeightMap();

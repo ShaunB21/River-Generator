@@ -13,13 +13,15 @@ public class RiverGenerator
     private static int width;
     private static int height;
     private static float[,] riverMap;
-    public RiverGenerator(float[,] heightMap, Vector2[] sources)
+    private static int seed;
+    public RiverGenerator(float[,] heightMap, Vector2[] sources, int seed)
     {
         RiverGenerator.heightMap = heightMap;
         RiverGenerator.sources = sources;
         width = heightMap.GetLength(0);
         height = heightMap.GetLength(1);
         riverMap = new float[width, height];
+        RiverGenerator.seed = seed;
     }
     public float[,] GenerateRiverMap()
     {
@@ -33,105 +35,60 @@ public class RiverGenerator
             while (currentRiverHeight > 0.2f && edgeReached == false)
             {
                 Vector2 nextRiverPosition = FindNextPosition(currentRiverPosition, s);
-                Vector2 currentPos = currentRiverPosition;
-                bool reached = false;
-                // Position to reach has bigger x and y values
                 try
                 {
-                    if (nextRiverPosition.x > currentRiverPosition.x && nextRiverPosition.y > currentRiverPosition.y)
-                    {
-                        while (reached == false)
-                        {
-                            if (currentPos.x != nextRiverPosition.x)
-                            {
-                                currentPos.x++;
-                            }
-                            if (currentPos.y != nextRiverPosition.y)
-                            {
-                                currentPos.y++;
-                            }
-                            if (currentPos == nextRiverPosition)
-                            {
-                                reached = true;
-                            }
-                            else
-                            {
-                                riverMap[(int)currentPos.x, (int)currentPos.y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
-                            }
-                        }
-                    }
-                    // Position to reach has smaller x and y values
-                    else if (nextRiverPosition.x < currentRiverPosition.x && nextRiverPosition.y < currentRiverPosition.y)
-                    {
-                        while (reached == false)
-                        {
-                            if (currentPos.x != nextRiverPosition.x)
-                            {
-                                currentPos.x--;
-                            }
-                            if (currentPos.y != nextRiverPosition.y)
-                            {
-                                currentPos.y--;
-                            }
+                    // Bresenham's line algorithm
+                    int x = (int)currentRiverPosition.x;
+                    int y = (int)currentRiverPosition.y;
 
-                            if (currentPos == nextRiverPosition)
-                            {
-                                reached = true;
-                            }
-                            else
-                            {
-                                riverMap[(int)currentPos.x, (int)currentPos.y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
-                            }
-                        }
-                    }
-                    // Position to reach has bigger x value and smaller y value
-                    else if (nextRiverPosition.x > currentRiverPosition.x && nextRiverPosition.y < currentRiverPosition.y)
-                    {
-                        while (reached == false)
-                        {
-                            if (currentPos.x != nextRiverPosition.x)
-                            {
-                                currentPos.x++;
-                            }
-                            if (currentPos.y != nextRiverPosition.y)
-                            {
-                                currentPos.y--;
-                            }
+                    int w = (int)nextRiverPosition.x - (int)currentRiverPosition.x;
+                    int h = (int)nextRiverPosition.y - (int)currentRiverPosition.y;
 
-                            if (currentPos == nextRiverPosition)
-                            {
-                                reached = true;
-                            }
-                            else
-                            {
-                                riverMap[(int)currentPos.x, (int)currentPos.y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
-                            }
-                        }
-                    }
-                    // Position to reach has smaller x value and bigger y value
-                    else if (nextRiverPosition.x < currentRiverPosition.x && nextRiverPosition.y > currentRiverPosition.y)
-                    {
-                        while (reached == false)
-                        {
-                            if (currentPos.x != nextRiverPosition.x)
-                            {
-                                currentPos.x--;
-                            }
-                            if (currentPos.y != nextRiverPosition.y)
-                            {
-                                currentPos.y++;
-                            }
+                    int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
 
-                            if (currentPos == nextRiverPosition)
-                            {
-                                reached = true;
-                            }
-                            else
-                            {
-                                riverMap[(int)currentPos.x, (int)currentPos.y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
-                            }
+                    if (w < 0) { dx1 = -1; dx2 = -1; }
+                    else if (w > 0) { dx1 = 1; dx2 = 1; }
+
+                    if (h < 0) { dy1 = -1; }
+                    else if (h > 0) { dy1 = 1; }
+
+                    int longest = Math.Abs(w);
+                    int shortest = Math.Abs(h);
+
+                    if (longest < shortest)
+                    {
+                        longest = Math.Abs(h);
+                        shortest = Math.Abs(w);
+                        if (h < 0) {
+                            dy2 = -1;
+                        }
+                        else if (h > 0) {
+                            dy2 = 1;
+                        }
+                        dx2 = 0;
+                    }
+                    int numerator = longest >> 1;
+                    System.Random rnd = new(seed);
+                    int offset = 0;
+                    for (int i = 0; i <= longest; i++)
+                    {
+                        offset = offset + rnd.Next(0, 2) * 2 - 1;
+                        Debug.Log(offset);
+                        riverMap[x + offset, y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
+                        numerator += shortest;
+                        if (numerator > longest)
+                        {
+                            numerator -= longest;
+                            x += dx1;
+                            y += dy1;
+                        }
+                        else
+                        {
+                            x += dx2;
+                            y += dy2;
                         }
                     }
+
                     riverMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y] = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
                     currentRiverHeight = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
                     currentRiverPosition = nextRiverPosition;
@@ -152,8 +109,9 @@ public class RiverGenerator
             {
                 if (riverMap[x, y] > 0.0f)
                 {
-                    float heightIncrease = 0.0f;
-                    int i = 0;
+                    float heightIncrease = 0.001f;
+                    float increment = 5;
+                    int i = 1;
                     Boolean done = false;
                     if (heightMap[x, y] - riverMap[x, y] > 0.01 || heightMap[x, y] - riverMap[x, y] > 0.01)
                     {
@@ -170,11 +128,14 @@ public class RiverGenerator
                                     modifiedHeightMap[x + i, y] = riverMap[x, y] + heightIncrease;
                                 }
                             } catch (IndexOutOfRangeException e) {break;}
-                            heightIncrease += 0.005f;
+                            //heightIncrease = (float)Math.Log(increment, 2) / 100;
+                            heightIncrease += 0.001f;
+                            increment += 5;
                             i++;
                         }
-                        heightIncrease = 0.0f;
-                        i = 0;
+                        heightIncrease = 0.001f;
+                        increment = 5;
+                        i = 1;
                         while (done == false)
                         {
                             try
@@ -189,7 +150,9 @@ public class RiverGenerator
                                 }
                             }
                             catch (IndexOutOfRangeException e) {break;}
-                            heightIncrease += 0.005f;
+                            //heightIncrease = (float)Math.Log(increment, 2) / 100;
+                            heightIncrease += 0.001f;
+                            increment += 5;
                             i++;
                         }
                     }
@@ -314,9 +277,10 @@ public class RiverGenerator
         return nextPos;
     }
 }
-// Terrain 343 - River 343 (erosion)
+// Terrain 343 - River 343 (best erosion)
 // Terrain 343 - River 3333
 // Terrain 343 - River 7223
 // Terrain 343 - River 3443 (erosion) (LONG GENERATION)
 // Terrain 343 - River 344343 (erosion)
 // Terrain 6565 - River 844 (four sources)
+// Terrain 444 - River 88 (big erosion)
