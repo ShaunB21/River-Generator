@@ -7,11 +7,29 @@ using System.Collections;
 using UnityEngine;
 using System;
 
-public static class Noise
+public class NoiseGenerator
 {
+    public int mapWidth;
+    public int mapHeight;
+    public int seed;
+    public float scale;
+    public int octaves;
+    public float persistence;
+    public float lacunarity;
+    public Vector2 offset;
+    public NoiseGenerator(int mapWidth, int mapHeight, int seed, float scale, int octaves, float persistence, float lacunarity, Vector2 offset)
+    {
+        this.mapWidth = mapWidth;
+        this.mapHeight = mapHeight;
+        this.seed = seed;
+        this.scale = scale;
+        this.octaves = octaves;
+        this.persistence = persistence;
+        this.lacunarity = lacunarity;
+        this.offset = offset;
+    }
 
-
-    public static float[,] GenerateNoiseMap(int mapWidth, int mapHeight, int seed, float scale, int octaves, float persistence, float lacunarity, Vector2 offset)
+    public float[,] GenerateNoiseMap()
     {
         float[,] noiseMap = new float[mapWidth, mapHeight];
         System.Random prng = new System.Random(seed);

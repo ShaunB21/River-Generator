@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 public class SourceGenerator
 {
     public static Vector2[] GenerateSources(float[,] heightMap, int sourcesNum, int seed)
@@ -27,12 +26,7 @@ public class SourceGenerator
             Vector2 sourcePosition = GenerateSource(potentialSources, seed); // Generates the source
             riverMap[(int)sourcePosition.x, (int)sourcePosition.y] = heightMap[(int)sourcePosition.x, (int)sourcePosition.y];
             sources[s].Set((int)sourcePosition.x, (int)sourcePosition.y);
-
         }
-        //float[,] modifiedHeightMap = GenerateRiverHeightMap(heightMap, riverMap);
-        //MeshData meshData = MeshGenerator.GenerateMesh(modifiedHeightMap);
-        //TerrainDrawer drawer = FindObjectOfType<TerrainDrawer>();
-        //drawer.DrawTerrainWithRivers(modifiedHeightMap, meshData, riverMap);
         return sources;
     }
 
@@ -40,6 +34,7 @@ public class SourceGenerator
     {
         Vector2 sourcePosition = new();
         System.Random rnd = new(seed);
+        // Gets a random vector from the list of potential sources
         int randomVector = rnd.Next(0, potentialSources.Count);
         sourcePosition.Set(potentialSources[randomVector].x, potentialSources[randomVector].y);
         return sourcePosition;

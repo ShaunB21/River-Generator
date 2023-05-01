@@ -5,23 +5,23 @@ using UnityEngine;
 
 public class RiverGenerator
 {
-    private static int[,] adjacentDirections = new int[,]{{-1,-1},{-1,0},{-1,1},{0,1},{1,1},{1,0},{1,-1},{0,-1}};
-    private static bool edgeReached;
+    private int[,] adjacentDirections = new int[,]{{-1,-1},{-1,0},{-1,1},{0,1},{1,1},{1,0},{1,-1},{0,-1}};
+    private bool edgeReached;
 
-    private static float[,] heightMap;
-    private static Vector2[] sources;
-    private static int width;
-    private static int height;
-    private static float[,] riverMap;
-    private static int seed;
+    private float[,] heightMap;
+    private Vector2[] sources;
+    private int width;
+    private int height;
+    private float[,] riverMap;
+    private int seed;
     public RiverGenerator(float[,] heightMap, Vector2[] sources, int seed)
     {
-        RiverGenerator.heightMap = heightMap;
-        RiverGenerator.sources = sources;
+        this.heightMap = heightMap;
+        this.sources = sources;
         width = heightMap.GetLength(0);
         height = heightMap.GetLength(1);
         riverMap = new float[width, height];
-        RiverGenerator.seed = seed;
+        this.seed = seed;
     }
     public float[,] GenerateRiverMap()
     {
@@ -73,7 +73,6 @@ public class RiverGenerator
                     for (int i = 0; i <= longest; i++)
                     {
                         offset = offset + rnd.Next(0, 2) * 2 - 1;
-                        Debug.Log(offset);
                         riverMap[x + offset, y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
                         numerator += shortest;
                         if (numerator > longest)
@@ -98,71 +97,12 @@ public class RiverGenerator
                 }         
             }
         }
+
         return riverMap;
     }
-    public float[,] GenerateRiverHeightMap()
-    {
-        float[,] modifiedHeightMap = heightMap;
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (riverMap[x, y] > 0.0f)
-                {
-                    float heightIncrease = 0.001f;
-                    float increment = 5;
-                    int i = 1;
-                    Boolean done = false;
-                    if (heightMap[x, y] - riverMap[x, y] > 0.01 || heightMap[x, y] - riverMap[x, y] > 0.01)
-                    {
-                        while (done == false)
-                        {
-                            try
-                            {
-                                if (riverMap[x, y] + heightIncrease > modifiedHeightMap[x + i, y])
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    modifiedHeightMap[x + i, y] = riverMap[x, y] + heightIncrease;
-                                }
-                            } catch (IndexOutOfRangeException e) {break;}
-                            //heightIncrease = (float)Math.Log(increment, 2) / 100;
-                            heightIncrease += 0.001f;
-                            increment += 5;
-                            i++;
-                        }
-                        heightIncrease = 0.001f;
-                        increment = 5;
-                        i = 1;
-                        while (done == false)
-                        {
-                            try
-                            {
-                                if (riverMap[x, y] + heightIncrease > modifiedHeightMap[x - i, y])
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    modifiedHeightMap[x - i, y] = riverMap[x, y] + heightIncrease;
-                                }
-                            }
-                            catch (IndexOutOfRangeException e) {break;}
-                            //heightIncrease = (float)Math.Log(increment, 2) / 100;
-                            heightIncrease += 0.001f;
-                            increment += 5;
-                            i++;
-                        }
-                    }
-                    modifiedHeightMap[x, y] = riverMap[x, y] - 0.005f;
-                }
-            }
-        }
-        return modifiedHeightMap;
-    }
-    private Vector2 FindNextPosition(Vector2 currentRiverPosition, int source)
+  
+    // Public only for testing purposes
+    public Vector2 FindNextPosition(Vector2 currentRiverPosition, int source)
     {
         edgeReached = false;
         Vector2 nextPos = new();
@@ -232,8 +172,10 @@ public class RiverGenerator
             // the search from array is given all the new values to search from
             toSearchFrom = newToSearchFrom;
             count++;
+            // If array has been searching for too long, switch to other method that is faster
             if (count > 100)
             {
+                // Goes in a straight line until a lower point is found
                 while (lowerFound == false)
                 {
                     int xIncrement;
@@ -284,3 +226,5 @@ public class RiverGenerator
 // Terrain 343 - River 344343 (erosion)
 // Terrain 6565 - River 844 (four sources)
 // Terrain 444 - River 88 (big erosion)
+// Terrain 79343 - River 9 (BETTER EROSION TEST) Advencheress
+// Terrain 343 - River 893545

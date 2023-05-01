@@ -7,10 +7,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class MeshGenerator
+public class MeshGenerator
 {
-
-	public static MeshData GenerateMesh(float[,] heightMap)
+	public float[,] heightMap;
+	public MeshGenerator(float[,] heightMap)
+    {
+		this.heightMap = heightMap;
+    }
+	public MeshData GenerateMesh()
 	{
 		int width = heightMap.GetLength(0);
 		int height = heightMap.GetLength(1);
