@@ -2,11 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class RiverGenerator
 {
     private int[,] adjacentDirections = new int[,]{{-1,-1},{-1,0},{-1,1},{0,1},{1,1},{1,0},{1,-1},{0,-1}};
     private bool edgeReached;
+    public int riverLength;
+    private int riverScale;
 
     private float[,] heightMap;
     private Vector2[] sources;
@@ -14,7 +17,8 @@ public class RiverGenerator
     private int height;
     private float[,] riverMap;
     private int seed;
-    public RiverGenerator(float[,] heightMap, Vector2[] sources, int seed)
+
+    public RiverGenerator(float[,] heightMap, Vector2[] sources, int seed, int riverScale)
     {
         this.heightMap = heightMap;
         this.sources = sources;
@@ -22,6 +26,7 @@ public class RiverGenerator
         height = heightMap.GetLength(1);
         riverMap = new float[width, height];
         this.seed = seed;
+        this.riverScale = riverScale;
     }
     public float[,] GenerateRiverMap()
     {
@@ -37,7 +42,10 @@ public class RiverGenerator
                 Vector2 nextRiverPosition = FindNextPosition(currentRiverPosition, s);
                 try
                 {
-                    // Bresenham's line algorithm
+                    // Connects the current river position to the next river position if there is a gap between them
+                    // Bresenham's line algorithm which was modified to include offsets
+                    //* Bresenham, J. E. (1965). Algorithm for computer control of a digital plotter. IBM Systems Journal, 4(1), 25-30. *
+
                     int x = (int)currentRiverPosition.x;
                     int y = (int)currentRiverPosition.y;
 
@@ -74,6 +82,16 @@ public class RiverGenerator
                     {
                         offset = offset + rnd.Next(0, 2) * 2 - 1;
                         riverMap[x + offset, y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
+                        for (int ri = 1; ri < riverScale; ri++)
+                        {
+                            riverMap[x + ri + offset, y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
+                        }
+                        for (int ri = 1; ri < riverScale; ri++)
+                        {
+                            riverMap[x - ri + offset, y] = heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y];
+                        }
+
+                        riverLength++;
                         numerator += shortest;
                         if (numerator > longest)
                         {
@@ -89,6 +107,16 @@ public class RiverGenerator
                     }
 
                     riverMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y] = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
+                    for (int ri = 1; ri < riverScale; ri++)
+                    {
+                        riverMap[(int)nextRiverPosition.x + ri, (int)nextRiverPosition.y] = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
+                    }
+                    for (int ri = 1; ri < riverScale; ri++)
+                    {
+                        riverMap[(int)nextRiverPosition.x - ri, (int)nextRiverPosition.y] = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
+                    }
+
+                    riverLength++;
                     currentRiverHeight = heightMap[(int)nextRiverPosition.x, (int)nextRiverPosition.y];
                     currentRiverPosition = nextRiverPosition;
                 } catch (IndexOutOfRangeException e)
@@ -132,6 +160,7 @@ public class RiverGenerator
                     int cx = (int)currentPos.x + adjacentDirections[j, 0];
                     int cy = (int)currentPos.y + adjacentDirections[j, 1];
                     // Checks to see if the point has already been visited
+                    Profiler.BeginSample("Find Next Pos");
                     for (int vi = 0; vi < visited.Count; vi++)
                     {
                         if (visited[vi].x == cx && visited[vi].y == cy)
@@ -140,6 +169,7 @@ public class RiverGenerator
                             visitedCheck = true;
                         }
                     }
+                    Profiler.EndSample();
                     try
                     {
                         // If visited check is false then it will check to see if the adjacent point is lower than the original point
@@ -220,11 +250,16 @@ public class RiverGenerator
     }
 }
 // Terrain 343 - River 343 (best erosion)
+// Terrain 343 - River 77 (best erosion and tributary streams)
+// Terrain 343 - River 663 (GOOD EROSION) (SCALE 4 GOOD TRIBUTARY)
+
 // Terrain 343 - River 3333
 // Terrain 343 - River 7223
 // Terrain 343 - River 3443 (erosion) (LONG GENERATION)
 // Terrain 343 - River 344343 (erosion)
 // Terrain 6565 - River 844 (four sources)
 // Terrain 444 - River 88 (big erosion)
-// Terrain 79343 - River 9 (BETTER EROSION TEST) Advencheress
+// Terrain 79343 - River 9 (BETTER EROSION TEST) 
 // Terrain 343 - River 893545
+// Terrain 343 - River 3 (good but a bit dodgy)
+// Terrain 343 - River 21 (long and goodish)

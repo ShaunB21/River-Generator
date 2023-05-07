@@ -9,7 +9,7 @@ using UnityEngine;
 
 public class MeshGenerator
 {
-	public float[,] heightMap;
+	private float[,] heightMap;
 	public MeshGenerator(float[,] heightMap)
     {
 		this.heightMap = heightMap;

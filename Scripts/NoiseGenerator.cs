@@ -9,14 +9,14 @@ using System;
 
 public class NoiseGenerator
 {
-    public int mapWidth;
-    public int mapHeight;
-    public int seed;
-    public float scale;
-    public int octaves;
-    public float persistence;
-    public float lacunarity;
-    public Vector2 offset;
+    private int mapWidth;
+    private int mapHeight;
+    private int seed;
+    private float scale;
+    private int octaves;
+    private float persistence;
+    private float lacunarity;
+    private Vector2 offset;
     public NoiseGenerator(int mapWidth, int mapHeight, int seed, float scale, int octaves, float persistence, float lacunarity, Vector2 offset)
     {
         this.mapWidth = mapWidth;

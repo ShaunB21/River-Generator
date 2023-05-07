@@ -74,7 +74,7 @@ public class RiverCarver
                         }
                     }
                     // Carve river bed
-                    modifiedHeightMap[x, y] = modifiedHeightMap[x, y] - 0.001f;
+                    modifiedHeightMap[x, y] = modifiedHeightMap[x, y] - 0.005f;
                 }
             }
         }
@@ -111,7 +111,9 @@ public class RiverCarver
                                 i++;
                             }
                         }
-
+                        heightIncrease = 0.001f;
+                        done = false;
+                        i = 1;
                         if (heightMap[x, y - 1] - erosionMap[x, y] > 0.005)
                         {
                             while (done == false)

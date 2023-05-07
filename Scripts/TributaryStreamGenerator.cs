@@ -38,16 +38,23 @@ public class TributaryStreamGenerator
             }
         }
         System.Random rnd = new(seed);
-        for (int s = 0; s < sourcesNum; s++) // Generates number of sources specified by the user
+
+        // Checks to see if potential sources array is not empty
+        if (potentialSources.Count > 0)
         {
-            seed = seed + s;
+            // Generates number of sources specified by the user
+            for (int s = 0; s < sourcesNum; s++) 
+            {
+                seed = seed + s;
 
-            Vector2 sourcePosition = new();
-            int randomVector = rnd.Next(0, potentialSources.Count);
-            sourcePosition.Set(potentialSources[randomVector].x, potentialSources[randomVector].y);
-            sources[s].Set((int)sourcePosition.x, (int)sourcePosition.y);
+                Vector2 sourcePosition = new();
+                int randomVector = rnd.Next(0, potentialSources.Count);
+                sourcePosition.Set(potentialSources[randomVector].x, potentialSources[randomVector].y);
+                sources[s].Set((int)sourcePosition.x, (int)sourcePosition.y);
 
+            }
         }
+
         return sources;
     }
     public float[,] GenerateRiverMap()
@@ -84,7 +91,8 @@ public class TributaryStreamGenerator
         return riverMap;
     }
 
-    private Vector2 FindNextPosition(Vector2 currentRiverPosition)
+    // Public only for testing purposes
+    public Vector2 FindNextPosition(Vector2 currentRiverPosition)
     {
         edgeReached = false;
         Vector2 nextPos = new();
@@ -96,18 +104,15 @@ public class TributaryStreamGenerator
             int cy = (int)currentRiverPosition.y + adjacentDirections[j, 1];
             try
             {
-
                 if (heightMap[cx, cy] > heightMap[(int)currentRiverPosition.x, (int)currentRiverPosition.y] && riverMap[cx, cy] != 1.0f)
                 {
                     nextPos.Set(cx, cy);
                 }
-
             }
             catch (IndexOutOfRangeException e)
             {
                 edgeReached = true;
             }
-
         }
         return nextPos;
     }
